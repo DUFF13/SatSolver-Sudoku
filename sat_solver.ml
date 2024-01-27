@@ -1,5 +1,6 @@
 
 
+
 (* All useful type declaration *)
 
 type litteral =
@@ -37,7 +38,10 @@ let rec print_list (l : 'a list) =
   | [] -> ()
   | t :: q -> print_string(t); print_string " "; print_list q;;
 
-let rec empty_clause_in (f : cnf) : bool = List.mem [] f;;
+let rec empty_clause_in (f : cnf) : bool = 
+  match f with
+  | [] -> false
+  | t :: q -> (t = [] || empty_clause_in q);;
 
 let int_list_to_litteral_list (l : int list) = List.map litteral_of_int l;;
 
@@ -72,18 +76,18 @@ let rec quine (f : cnf) : bool =
   | (Var x :: _) :: _ | (NVar x :: _) :: _ ->
     if quine ((cnf_without_clause_x ((cnf_without_negx f (Var x)))) (Var x))
        then true
-    else quine (cnf_without_clause_x f (Var x))
+    else quine (cnf_without_negx (cnf_without_clause_x f (NVar x)) (NVar x))
   | _ -> failwith "impossible";;
 
 
 
 (*  TEST  *)
-let (clause1 : clause) = int_list_to_litteral_list [1; -2];;
+let (clause1 : clause) = int_list_to_litteral_list [-1];;
 
-let (clause2 : clause) = int_list_to_litteral_list [3; 2];;
-let (clause3 : clause) = int_list_to_litteral_list [-1; -2];;
+let (clause2 : clause) = int_list_to_litteral_list [1];;
+let (clause3 : clause) = int_list_to_litteral_list [-1; 2];;
 
-let (f : cnf) = [clause1; clause2; clause3];;
+let (f : cnf) = [clause1; clause2];;
 
 cnf_without_clause_x f (Var(1));;
 cnf_without_negx f (Var(2));;
