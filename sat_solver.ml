@@ -33,15 +33,15 @@ let neg_of_litteral (l : litteral) : litteral =
   | Var x -> NVar x
   | NVar x -> Var x;;
 
-let rec print_list (l : 'a list) = 
+let rec print_clause (l : 'a list) = 
   match l with
   | [] -> ()
-  | t :: q -> print_int(int_of_litteral t); print_string " "; print_list q;;
+  | t :: q -> print_int(int_of_litteral t); print_string " "; print_clause q;;
 
 let rec print_cnf (f : cnf) =
   match f with
   | [] -> ()
-  | t :: q -> print_string "("; print_list t; print_string ")^"; print_cnf q;;
+  | t :: q -> print_string "("; print_clause t; print_string ") ^ "; print_cnf q;;
 
 let rec empty_clause_in (f : cnf) : bool = List.mem [] f
 
@@ -63,13 +63,19 @@ let rec clause_without_negx (c : clause)(x : litteral) : clause =
 let rec cnf_without_negx (f : cnf)(x : litteral) : cnf =
   match f with
   | [] -> []
-  | t :: q -> clause_without_negx t x :: cnf_without_negx q x
-               
-          
-;;
+  | t :: q -> clause_without_negx t x :: cnf_without_negx q x;;
+
+let rec one_var_clause (f : cnf) : bool * litteral =
+  match f with
+  | [] -> false, Var 0
+  | t :: q -> match t with
+              | [] -> false, Var 0
+              | a :: [] -> (true, a)
+              | _ :: b -> one_var_clause q;;
 
 
-(* Algorithm Quine + DPLL *) 
+
+(* Algorithm : Quine + DPLL *) 
 
 let rec quine (f : cnf) : bool * clause =
   match f with
@@ -78,23 +84,36 @@ let rec quine (f : cnf) : bool * clause =
   | (Var x :: _) :: _ | (NVar x :: _) :: _ ->
   let (sat, c) = quine ((cnf_without_clause_x ((cnf_without_negx f (Var x)))) (Var x)) in
     if sat then (sat, Var x :: c)
-       
     else let (sat, c) = quine (cnf_without_negx (cnf_without_clause_x f (NVar x)) (NVar x)) in
          if not sat then (false, []) else (sat, NVar x :: c) 
   | _ -> failwith "impossible";;
 
+
+let rec dpll (f : cnf) : bool * clause =
+  match f with
+  | [] -> (true, [])
+  | t  :: q when empty_clause_in f -> (false, [])
+  | (Var x :: _ ) :: _ | (NVar x :: _) :: _ ->
+  let (one, lit) = one_var_clause f in 
+  if one then let (sat, c) = dpll ((cnf_without_clause_x ((cnf_without_negx f (lit)))) (lit)) in
+              if sat then (sat, lit :: c)
+              else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (neg_of_litteral lit)) (neg_of_litteral lit)) in
+                   if not sat then (false, []) else (sat, neg_of_litteral lit :: c)
+  else let (sat, c) = dpll ((cnf_without_clause_x ((cnf_without_negx f (Var x)))) (Var x)) in
+              if sat then (sat, Var x :: c)
+              else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (NVar x)) (NVar x)) in
+                   if not sat then (false, []) else (sat, NVar x :: c)
 
 
 
 
 
 (*  TEST  *)
-let (clause1 : clause) = int_list_to_litteral_list [-1; -2; 3];;
-
+let (clause1 : clause) = int_list_to_litteral_list [-1; 2];;
 let (clause2 : clause) = int_list_to_litteral_list [1; 2;-3];;
-let (clause3 : clause) = int_list_to_litteral_list [-1; -2; -3];;
-
+let (clause3 : clause) = int_list_to_litteral_list [-3];;
 let (f : cnf) = [clause1; clause2; clause3];;
+one_var_clause f;;
 print_cnf f;;
 let cnf_satisfiable = [[Var 1; Var 2]; [NVar 1; Var 2; NVar 3]; [Var 3; NVar 2]; [Var 1; NVar 3]];;
 let cnf_insatisfiable = [[Var 1; Var 2]; [NVar 1; NVar 2]; [Var 1; NVar 2]; [NVar 1; Var 2]];;
@@ -105,3 +124,9 @@ cnf_without_negx f (Var(2));;
 quine cnf_satisfiable;;
 quine cnf_satisfiable_values_2;;
 quine cnf_insatisfiable;;
+dpll f;;
+dpll cnf_satisfiable;;
+dpll cnf_satisfiable_values;;
+dpll cnf_satisfiable_values_2;;
+dpll cnf_insatisfiable;;
+
