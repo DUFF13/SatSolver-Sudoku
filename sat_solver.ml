@@ -1,6 +1,5 @@
 
-
-
+(* SAT SOLVER USING QUINE AND DPLL ALGORITHMS, DPLL IS JUST AN OPTIMIZE QUINE ALGORITHM *)
 (* All useful type declaration *)
 
 type litteral =
@@ -68,12 +67,19 @@ let rec cnf_without_negx (f : cnf)(x : litteral) : cnf =
 let rec one_var_clause (f : cnf) : bool * litteral =
   match f with
   | [] -> false, Var 0
-  | t :: q -> match t with
+  | t :: q -> match t with (* with dpll or quine t cannot be empty but compiler not happy *)
               | [] -> false, Var 0
               | a :: [] -> (true, a)
               | _ :: b -> one_var_clause q;;
 
 
+
+let rec pur_var_cnf (f : cnf): bool * litteral =
+  match f with
+  | [] -> false, Var 0
+  | t :: q -> match t with (* with dpll or quine t cannot be empty but compiler not happy *)
+              | [] -> false, Var 0
+              | a :: b -> ;; (* not finish *)
 
 (* Algorithm : Quine + DPLL *) 
 
@@ -103,6 +109,7 @@ let rec dpll (f : cnf) : bool * clause =
               if sat then (sat, Var x :: c)
               else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (NVar x)) (NVar x)) in
                    if not sat then (false, []) else (sat, NVar x :: c)
+  |_ -> failwith "impossible"
 
 
 
