@@ -90,7 +90,7 @@ let pur_var_cnf (f : cnf): bool * litteral =
 
 (* Algorithm : Quine + DPLL *) 
 
-let rec quine (f : cnf) : bool * clause =
+(* let rec quine (f : cnf) : bool * clause =
   match f with
   | [] -> true, []
   | _ when empty_clause_in f -> (false, [])
@@ -152,3 +152,4 @@ dpll cnf_satisfiable_values;;
 dpll cnf_satisfiable_values_2;;
 dpll cnf_insatisfiable;;
 
+*)
