@@ -67,18 +67,24 @@ let rec cnf_without_negx (f : cnf)(x : litteral) : cnf =
 let rec one_var_clause (f : cnf) : bool * litteral =
   match f with
   | [] -> false, Var 0
-  | t :: q -> match t with (* with dpll or quine t cannot be empty but compiler not happy *)
-              | [] -> false, Var 0
+  | t :: q -> match t with  
+              | [] -> false, Var 0  (* with dpll or quine t cannot be empty but compiler not happy non-exhaustiv pattern-matching *)
               | a :: [] -> (true, a)
               | _ :: b -> one_var_clause q;;
+
+let rec clause_without_x (f : clause)(x : litteral) : clause =
+  match f with
+  | [] -> []
+  | t :: q -> if (t = x || t = neg_of_litteral x) then clause_without_x q x
+              else t :: clause_without_x q x;;
 
 
 let pur_var_cnf (f : cnf): bool * litteral =
   let rec aux (g : clause) : bool * litteral =
     match g with
     | [] -> false, Var 0 (* with dpll or quine t cannot be empty*)
-    | t :: q -> if not(List.mem((neg_of_litteral t) q)) then true, t
-                else aux q
+    | t :: q when not (List.mem (neg_of_litteral t) q) -> (true, t)
+    | t :: q -> aux (clause_without_x q t)
   in aux (List.flatten f);;
 
 
@@ -96,20 +102,24 @@ let rec quine (f : cnf) : bool * clause =
   | _ -> failwith "impossible";;
 
 
+
 let rec dpll (f : cnf) : bool * clause =
   match f with
   | [] -> (true, [])
   | t  :: q when empty_clause_in f -> (false, [])
-  | (Var x :: _ ) :: _ | (NVar x :: _) :: _ ->
-  let (one, lit) = one_var_clause f in 
+  | (x :: _ ) :: _ | (x :: _) :: _ ->
+  let (one, lit) = one_var_clause f in
   if one then let (sat, c) = dpll ((cnf_without_clause_x ((cnf_without_negx f (lit)))) (lit)) in
               if sat then (sat, lit :: c)
               else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (neg_of_litteral lit)) (neg_of_litteral lit)) in
                    if not sat then (false, []) else (sat, neg_of_litteral lit :: c)
-  else let (sat, c) = dpll ((cnf_without_clause_x ((cnf_without_negx f (Var x)))) (Var x)) in
-              if sat then (sat, Var x :: c)
-              else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (NVar x)) (NVar x)) in
-                   if not sat then (false, []) else (sat, NVar x :: c)
+  else let (pur, lit) = pur_var_cnf f in
+       if pur then let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (neg_of_litteral lit)) (neg_of_litteral lit)) in
+                   if not sat then (false, []) else (sat, neg_of_litteral lit :: c)
+  else let (sat, c) = dpll ((cnf_without_clause_x ((cnf_without_negx f x))) x) in
+              if sat then (sat, x :: c)
+              else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f x) x) in
+                   if not sat then (false, []) else (sat, neg_of_litteral x :: c)
   |_ -> failwith "impossible"
 
 
@@ -118,10 +128,13 @@ let rec dpll (f : cnf) : bool * clause =
 
 (*  TEST  *)
 let (clause1 : clause) = int_list_to_litteral_list [-1; 2];;
-let (clause2 : clause) = int_list_to_litteral_list [1; 2;-3];;
-let (clause3 : clause) = int_list_to_litteral_list [-3];;
+let (clause2 : clause) = int_list_to_litteral_list [1; -2;-3];;
+let (clause3 : clause) = int_list_to_litteral_list [-3; 2];;
 let (f : cnf) = [clause1; clause2; clause3];;
+let a = List.flatten f;;
+clause_without_x a (Var 2);;
 one_var_clause f;;
+pur_var_cnf f;;
 print_cnf f;;
 let cnf_satisfiable = [[Var 1; Var 2]; [NVar 1; Var 2; NVar 3]; [Var 3; NVar 2]; [Var 1; NVar 3]];;
 let cnf_insatisfiable = [[Var 1; Var 2]; [NVar 1; NVar 2]; [Var 1; NVar 2]; [NVar 1; Var 2]];;
@@ -132,6 +145,7 @@ cnf_without_negx f (Var(2));;
 quine cnf_satisfiable;;
 quine cnf_satisfiable_values_2;;
 quine cnf_insatisfiable;;
+quine f;;
 dpll f;;
 dpll cnf_satisfiable;;
 dpll cnf_satisfiable_values;;
