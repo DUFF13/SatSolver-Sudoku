@@ -15,23 +15,25 @@ let rec quine (f : cnf) : bool * clause =
 
 
 
-let rec dpll (f : cnf) : bool * clause = (* problem *)
+let rec dpll (f : cnf) : bool * clause = 
   match f with
   | [] -> (true, [])
-  | t  :: q when empty_clause_in f -> (false, [])
-  | (x :: _ ) :: _ | (x :: _) :: _ ->
+  | _ when empty_clause_in f -> (false, [])
+  | (x :: _ ) :: _  ->
   let (one, lit) = one_var_clause f in
-  if one then let (sat, c) = dpll ((cnf_without_clause_x ((cnf_without_negx f (lit)))) (lit)) in
-              if sat then (sat, lit :: c)
-              else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (neg_of_litteral lit)) (neg_of_litteral lit)) in
-                   if not sat then (false, []) else (sat, neg_of_litteral lit :: c)
-  else let (pur, lit) = pur_var_cnf f in
-       if pur then let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (neg_of_litteral lit)) (neg_of_litteral lit)) in
-                   if not sat then (false, []) else (sat, neg_of_litteral lit :: c)
+  if one then let (sat, c) = dpll (cnf_without_clause_x (cnf_without_negx f lit) lit) in
+       if sat then (sat, lit :: c)
+       else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (neg_of_litteral lit)) (neg_of_litteral lit)) in
+            if not sat then (false, []) else (sat, neg_of_litteral lit :: c)
+  else let (pure, lit)  = pur_var_cnf f in
+       if pure then let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f lit) lit) in
+       if sat then (sat, lit :: c)
+            else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (neg_of_litteral lit)) (neg_of_litteral lit)) in
+                if not sat then (false, []) else (sat, neg_of_litteral lit :: c)
   else let (sat, c) = dpll ((cnf_without_clause_x ((cnf_without_negx f x))) x) in
-              if sat then (sat, x :: c)
-              else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f x) x) in
-                   if not sat then (false, []) else (sat, neg_of_litteral x :: c)
+         if sat then (sat, x :: c)
+         else let (sat, c) = dpll (cnf_without_negx (cnf_without_clause_x f (neg_of_litteral x)) (neg_of_litteral x)) in
+             if not sat then (false, []) else (sat, neg_of_litteral x :: c)
   |_ -> failwith "impossible"
 
 
