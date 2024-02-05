@@ -58,7 +58,7 @@ cnf_without_clause_x f (Var(1));;
 cnf_without_negx f (Var(2));;
 quine cnf_satisfiable;;
 quine cnf_satisfiable_values_2;;
-quine cnf_insatisfiable;;
+dpll cnf_insatisfiable;;
 quine f;;
 dpll f;;
 dpll cnf_satisfiable;;

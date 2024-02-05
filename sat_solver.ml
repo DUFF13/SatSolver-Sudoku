@@ -42,6 +42,11 @@ let rec print_cnf (f : cnf) =
   | [] -> ()
   | t :: q -> print_string "("; print_clause t; print_string ") ^ "; print_cnf q;;
 
+let rec print_list (l : 'a list) : unit =
+  match l with
+  | [] -> ()
+  | t :: q -> print_string(t); print_string " "; print_list q;;
+
 let rec empty_clause_in (f : cnf) : bool = List.mem [] f
 
 let int_list_to_litteral_list (l : int list) = List.map litteral_of_int l;;
