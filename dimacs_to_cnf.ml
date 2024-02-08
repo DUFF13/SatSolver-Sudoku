@@ -1,6 +1,6 @@
 open quine_dpll
 
-(* let formula (filename : string) : cnf  = (* fnc * number of variables * number of clauses *)
+ let formula (filename : string) : cnf  =
    let x = open_in filename in
    let (f : cnf ref) = ref [] in
    let b = ref true in
@@ -8,11 +8,12 @@ open quine_dpll
      while !b do
        let line = input_line x in
           match line.[0] with
-            | '%' -> b := false
-            | 'p' | 'c' | ' ' -> () (* let line_list = List.filter (fun s -> s <> "")(String.split_on_char ' ' line) in
+            | '%'  -> b := false
+            | 'p' | 'c' -> () (* let line_list = List.filter (fun s -> s <> "")(String.split_on_char ' ' line) in
                      print_list line_list;*)
             | _ -> let line_list = List.filter (fun s -> s <> "")(String.split_on_char ' ' line) in
-                   let (c : clause) = List.tl (List.rev (List.map litteral_of_int (List.map int_of_string line_list))) in f := c :: !f
+                   let literals = List.filter_map (fun s -> int_of_string_opt s) line_list in literals;
+                   let (c : clause) =  (List.rev (List.map litteral_of_int literals)) in f := c :: !f
        done;
      !f;
    with
@@ -20,25 +21,14 @@ open quine_dpll
      !f;;
 
 
+
+
+(*  TESTS   *)
 let formule = formula "uf20-91/uf20-05.cnf";;
-dpll formule;; *)
+dpll formule;; 
 
-let read (filename : string) : cnf =
-  let li
-  let (f : cnf ref) = ref []  in
-  let x = open_in filename in
-  try
-    while true; do
-      let line = input_line x in
-      let line_list = List.filter (fun s -> s <> "")(String.split_on_char ' ' line) in print_list line_list;
-      if ((String.length line > 0) && not (line.[0] = 'c' || line.[0] = 'p')) then
-       
-    done; !f
-  with End_of_file -> close_in x;
- !f;;
+let s = " -1 2 3 0";;
+let b = List.filter (fun s -> s <> "")(String.split_on_char ' ' s);;
+let literals = List.filter_map (fun a -> int_of_string_opt a) b;;
+let c = List.tl (List.rev (List.map litteral_of_int literals));;
 
-
-let formule1 = formula "uf20-91/uf20-05.cnf";;
-
-let l = ["1"; "3"];;
-List.map int_of_string l;;
