@@ -158,3 +158,17 @@ dpll cnf_satisfiable_values_2;;
 dpll cnf_insatisfiable;;
 
 *)
+
+let rec random_clause (n : int) : clause =
+  if n = 0 then [] else
+  let x = Random.int (2 * n) in 
+  if x < n then Var(x + 1) :: random_clause (n - 1)
+  else NVar(x - n + 1) :: random_clause (n - 1);;
+
+
+
+let rec random_cnf (n : int) (m : int) : cnf =
+  if m = 0 then [] else
+  random_clause n :: random_cnf n (m - 1);;
+
+
